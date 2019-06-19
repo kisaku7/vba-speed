@@ -1,0 +1,437 @@
+
+
+
+Const stringSplit As String = vbTab
+Const stringNewLine As String = vbNewLine
+Sub テキスト出力の実行時間計測2()
+   
+    ' プログラムの開始時刻を記録
+    開始時刻 = Time
+
+    ' カウンター
+    cnt = 1
+   
+    ' 出力対象
+    Dim 出力対象 As Variant
+    出力対象 = Range("A1").CurrentRegion
+    データ数 = UBound(出力対象, 1) * UBound(出力対象, 2)
+   
+    ' １回に出力するバイト数を設定する
+    ' この変数を 100 ～ 1700 まで変更した
+    出力単位 = 1700
+    出力回数 = 0
+   
+    ' 出力するデータ格納用変数
+    データ = ""
+   
+    ' 50 万回繰り返す
+    For i = 1 To データ数
+        If データ = "" Then
+            データ = 出力対象(Int(i / UBound(出力対象, 1)) + 1, i Mod UBound(出力対象, 2) + 1)
+        Else
+            If i Mod UBound(出力対象, 2) = 1 Then
+              データ = データ & vbNewLine
+            Else
+              データ = データ & ","
+            End If
+            データ = データ & 出力対象(Int(i / UBound(出力対象, 1)) + 1, i Mod UBound(出力対象, 2) + 1)
+        End If
+       
+        ' 進捗をイミディエイトウィンドウに出力
+        If (i / データ数) * 100 > cnt Then
+            Debug.Print Application.WorksheetFunction.RoundDown((i / データ数) * 100, 0) & " ％ 完了  Time: " & Time
+            cnt = cnt + 1
+        End If
+       
+        '////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ' 出力
+        '////////////////////////////////////////////////////////////////////////////////////////////////////////
+        If 出力単位 <= LenB(データ) Then
+           
+            If 出力回数 = 0 Then
+                Call データ出力("50万行×2列", データ)
+                データ = ""
+                出力回数 = 出力回数 + 1
+            Else
+                Call データ追記("50万行×2列", データ)
+                データ = ""
+               出力回数 = 出力回数 + 1
+            End If
+           
+        End If
+        '////////////////////////////////////////////////////////////////////////////////////////////////////////
+       
+        DoEvents
+       
+    Next i
+   
+    ' プログラムの終了時刻を記録
+    終了時刻 = Time
+   
+    ' プログラムの実行時間を計算
+    実行時間 = DateDiff("s", 開始時刻, 終了時刻)
+   
+    ' 実行時間をイミディエイトウィンドウに出力
+    Debug.Print "Start: " & 開始時刻 & vbNewLine & "End: " & 終了時刻 & vbNewLine & "実行時間: " & 実行時間 & " sec"
+   
+    ' プログラムの終了アナウンス
+    MsgBox "テキスト出力完了"
+   
+End Sub
+
+
+
+Sub データ出力(ByVal データ名, ByVal 出力内容文字列)
+   
+    '変数を定義します
+    Dim FSO As Object
+   
+    'オブジェクトを作ります
+    Set FSO = CreateObject("Scripting.FileSystemObject")
+   
+    With FSO.CreateTextFile(ThisWorkbook.Path & "\" & データ名 & ".txt")
+        .write 出力内容文字列
+        .Close
+    End With
+   
+    ' メモリの明示的開放
+    Set FSO = Nothing
+   
+End Sub
+
+
+
+Sub データ追記(ByVal データ名, ByVal 出力内容文字列)
+   
+    fnsave = ThisWorkbook.Path & "\" & データ名 & ".txt"
+   
+    numff = FreeFile
+   
+    Open fnsave For Append As #numff
+   
+    Print #numff, 出力内容文字列
+   
+    Close #numff
+   
+End Sub
+
+
+Sub test()
+  出力内容文字列 = Space(4)
+  Mid(出力内容文字列, 1, 1) = "a"
+  Mid(出力内容文字列, 2, 2) = vbNewLine
+  Mid(出力内容文字列, 4, 1) = "b"
+  Debug.Print Len(vbTab)
+    '変数を定義します
+  Dim FSO As Object
+  
+  'オブジェクトを作ります
+  Set FSO = CreateObject("Scripting.FileSystemObject")
+  
+  With FSO.CreateTextFile(ThisWorkbook.Path & "\testoutput.txt")
+      .write "a"
+      .Close
+  End With
+End Sub
+
+
+
+Sub test2()
+    開始時刻 = Time
+  Dim 出力対象 As Variant
+  出力対象 = Range("A1:GS15000")
+  '出力対象 = Range("A1").CurrentRegion
+  データ数 = UBound(出力対象, 1) * UBound(出力対象, 2)
+
+  データ文字数 = 0
+  
+  ' 50 万回繰り返す
+ ' For i = 1 To データ数
+    'データ文字数 = Len(出力対象(Int((i - 1) / UBound(出力対象, 2)) + 1, (i - 1) Mod UBound(出力対象, 2) + 1))
+
+    'DoEvents
+'  Next
+
+  lenStringSplit = Len(vbTab)
+  lenStringNewLine = Len(vbNewLine)
+
+  For i = LBound(出力対象, 1) To UBound(出力対象, 1)
+    For j = LBound(出力対象, 2) To UBound(出力対象, 2)
+      データ文字数 = データ文字数 + Len(出力対象(i, j))
+    Next
+  Next
+  
+  ' stringSplit
+  データ文字数 = データ文字数 + (UBound(出力対象, 2) - 1) * UBound(出力対象, 1) * lenStringSplit
+  データ文字数 = データ文字数 + ((UBound(出力対象, 1) - 1) * lenStringNewLine)
+  
+
+    ' プログラムの終了時刻を記録
+    終了時刻 = Time
+   
+    ' プログラムの実行時間を計算
+    実行時間 = DateDiff("s", 開始時刻, 終了時刻)
+   
+    ' 実行時間をイミディエイトウィンドウに出力
+    Debug.Print "Start: " & 開始時刻 & vbNewLine & "End: " & 終了時刻 & vbNewLine & "実行時間: " & 実行時間 & " sec"
+    Debug.Print "count:" & データ文字数
+    DoEvents
+        開始時刻 = Time
+    '変数Msgのスペースを確保する
+    msg = Space(データ文字数)
+    pt = 1  '文字位置
+  For i = LBound(出力対象, 1) To UBound(出力対象, 1)
+    If i > 1 Then
+      Mid(msg, pt, lenStringNewLine) = stringNewLine
+      pt = pt + lenStringNewLine
+    End If
+    For j = LBound(出力対象, 2) To UBound(出力対象, 2)
+      If j > 1 Then
+        Mid(msg, pt, lenStringSplit) = stringSplit
+        pt = pt + lenStringSplit
+      End If
+      s = 出力対象(i, j)
+      Ln = Len(s)
+   '   Lnb = LenB(s)
+      Mid(msg, pt, Ln) = s
+      pt = pt + Ln
+    Next
+  Next
+    ' プログラムの終了時刻を記録
+    終了時刻 = Time
+   
+    ' プログラムの実行時間を計算
+    実行時間 = DateDiff("s", 開始時刻, 終了時刻)
+   
+    ' 実行時間をイミディエイトウィンドウに出力
+    Debug.Print "Start: " & 開始時刻 & vbNewLine & "End: " & 終了時刻 & vbNewLine & "実行時間: " & 実行時間 & " sec"
+    
+    Debug.Print "count:" & Len(msg)
+    DoEvents
+    
+    
+    
+    開始時刻 = Time
+    Call データ出力("testJoin", msg)
+    ' プログラムの終了時刻を記録
+    終了時刻 = Time
+   
+    ' プログラムの実行時間を計算
+    実行時間 = DateDiff("s", 開始時刻, 終了時刻)
+   
+    ' 実行時間をイミディエイトウィンドウに出力
+    Debug.Print "Start: " & 開始時刻 & vbNewLine & "End: " & 終了時刻 & vbNewLine & "実行時間: " & 実行時間 & " sec"
+    
+    Debug.Print "complete"
+    Debug.Print "---------------------------------"
+End Sub
+
+
+
+Sub test3(ByVal 出力文字数単位 As Long)
+  Dim 出力対象 As Variant
+  出力対象 = Range("A1:GS15000")
+  '出力対象 = Range("A1").CurrentRegion
+  データ数 = UBound(出力対象, 1) * UBound(出力対象, 2)
+
+  データ文字数 = 0
+  
+'  出力文字数単位 = 5000
+  出力回数 = 0
+
+  lenStringSplit = Len(vbTab)
+  lenStringNewLine = Len(vbNewLine)
+
+  DoEvents
+  開始時刻 = Time
+  '変数Msgのスペースを確保する
+  msg = Space(出力文字数単位)
+  For i = LBound(出力対象, 1) To UBound(出力対象, 1)
+    If i > 1 Then
+      If 出力文字数単位 <= (データ文字数 + lenStringNewLine) Then ' データ文字数を超えてきたら、のため
+          If 出力回数 = 0 Then
+              Call データ出力("testJoin", Left(msg, データ文字数) & stringNewLine)
+          Else
+              Call データ追記("testJoin", Left(msg, データ文字数) & stringNewLine)
+          End If
+          出力回数 = 出力回数 + 1
+          データ文字数 = 0
+          msg = Space(出力文字数単位)
+      Else
+         Mid(msg, データ文字数 + 1, lenStringNewLine) = stringNewLine
+         データ文字数 = データ文字数 + lenStringNewLine
+      End If
+    End If
+    For j = LBound(出力対象, 2) To UBound(出力対象, 2)
+      If j > 1 Then
+        If 出力文字数単位 <= (データ文字数 + lenStringSplit) Then ' データ文字数を超えてきたら、のため
+            If 出力回数 = 0 Then
+                Call データ出力("testJoin", Left(msg, データ文字数) & stringSplit)
+            Else
+                Call データ追記("testJoin", Left(msg, データ文字数) & stringSplit)
+            End If
+            出力回数 = 出力回数 + 1
+            データ文字数 = 0
+            msg = Space(出力文字数単位)
+        Else
+           Mid(msg, データ文字数 + 1, lenStringSplit) = stringSplit
+           データ文字数 = データ文字数 + lenStringSplit
+        End If
+      End If
+      
+      s = 出力対象(i, j)
+      Ln = Len(s)
+        If 出力文字数単位 <= (データ文字数 + Ln) Then ' データ文字数を超えてきたら、のため
+            If 出力回数 = 0 Then
+                Call データ出力("testJoin", Left(msg, データ文字数) & s)
+            Else
+                Call データ追記("testJoin", Left(msg, データ文字数) & s)
+            End If
+            出力回数 = 出力回数 + 1
+            データ文字数 = 0
+            msg = Space(出力文字数単位)
+        Else
+           Mid(msg, データ文字数 + 1, Ln) = s
+           データ文字数 = データ文字数 + Ln
+        End If
+    Next
+  Next
+  If データ文字数 > 0 Then
+    If 出力回数 = 0 Then
+        Call データ出力("testJoin", Left(msg, データ文字数) & s)
+    Else
+        Call データ追記("testJoin", Left(msg, データ文字数) & s)
+    End If
+  End If
+  出力回数 = 出力回数 + 1
+    ' プログラムの終了時刻を記録
+    終了時刻 = Time
+   
+    ' プログラムの実行時間を計算
+    実行時間 = DateDiff("s", 開始時刻, 終了時刻)
+   
+    ' 実行時間をイミディエイトウィンドウに出力
+    Debug.Print "Start: " & 開始時刻 & vbNewLine & "End: " & 終了時刻 & vbNewLine & "実行時間: " & 実行時間 & " sec"
+
+    Debug.Print "complete"
+    Debug.Print "----------------"
+End Sub
+Sub t_test3()
+  For num = 1000 To 10000 Step 1000
+    Debug.Print "test:" & num
+    Call test3(num)
+  Next
+End Sub
+
+
+
+' midB ver
+Sub test4(ByVal 出力文字数単位 As Long)
+  Dim 出力対象 As Variant
+  出力対象 = Range("A1:GS50000")
+  '出力対象 = Range("A1").CurrentRegion
+  データ数 = UBound(出力対象, 1) * UBound(出力対象, 2)
+
+  データ文字数 = 0
+  
+'  出力文字数単位 = 5000
+  出力回数 = 0
+
+  lenStringSplit = LenB(vbTab)
+  lenStringNewLine = LenB(vbNewLine)
+
+  DoEvents
+  開始時刻 = Time
+  '変数Msgのスペースを確保する
+  msg = Space(出力文字数単位)
+  For i = LBound(出力対象, 1) To UBound(出力対象, 1)
+    If i > 1 Then
+      If 出力文字数単位 <= (データ文字数 + lenStringNewLine) Then ' データ文字数を超えてきたら、のため
+          If 出力回数 = 0 Then
+              Call データ出力("testJoin", LeftB(msg, データ文字数) & stringNewLine)
+          Else
+              Call データ追記("testJoin", LeftB(msg, データ文字数) & stringNewLine)
+          End If
+          出力回数 = 出力回数 + 1
+          データ文字数 = 0
+          msg = Space(出力文字数単位)
+      Else
+         MidB(msg, データ文字数 + 1, lenStringNewLine) = stringNewLine
+         データ文字数 = データ文字数 + lenStringNewLine
+      End If
+    End If
+    For j = LBound(出力対象, 2) To UBound(出力対象, 2)
+      If j > 1 Then
+        If 出力文字数単位 <= (データ文字数 + lenStringSplit) Then ' データ文字数を超えてきたら、のため
+            If 出力回数 = 0 Then
+                Call データ出力("testJoin", LeftB(msg, データ文字数) & stringSplit)
+            Else
+                Call データ追記("testJoin", LeftB(msg, データ文字数) & stringSplit)
+            End If
+            出力回数 = 出力回数 + 1
+            データ文字数 = 0
+            msg = Space(出力文字数単位)
+        Else
+           MidB(msg, データ文字数 + 1, lenStringSplit) = stringSplit
+           データ文字数 = データ文字数 + lenStringSplit
+        End If
+      End If
+      
+      s = 出力対象(i, j)
+      Ln = LenB(s)
+        If 出力文字数単位 <= (データ文字数 + Ln) Then ' データ文字数を超えてきたら、のため
+            If 出力回数 = 0 Then
+                Call データ出力("testJoin", LeftB(msg, データ文字数) & s)
+            Else
+                Call データ追記("testJoin", LeftB(msg, データ文字数) & s)
+            End If
+            出力回数 = 出力回数 + 1
+            データ文字数 = 0
+            msg = Space(出力文字数単位)
+        Else
+           MidB(msg, データ文字数 + 1, Ln) = s
+           データ文字数 = データ文字数 + Ln
+        End If
+    Next
+  Next
+  If データ文字数 > 0 Then
+    If 出力回数 = 0 Then
+        Call データ出力("testJoin", Left(msg, データ文字数) & s)
+    Else
+        Call データ追記("testJoin", Left(msg, データ文字数) & s)
+    End If
+  End If
+  出力回数 = 出力回数 + 1
+    ' プログラムの終了時刻を記録
+    終了時刻 = Time
+   
+    ' プログラムの実行時間を計算
+    実行時間 = DateDiff("s", 開始時刻, 終了時刻)
+   
+    ' 実行時間をイミディエイトウィンドウに出力
+    Debug.Print "Start: " & 開始時刻 & vbNewLine & "End: " & 終了時刻 & vbNewLine & "実行時間: " & 実行時間 & " sec"
+
+    Debug.Print "complete"
+    Debug.Print "----------------"
+End Sub
+Sub t_test4()
+  For num = 1000 To 30000 Step 2500
+    Debug.Print "test:" & num
+    Call test4(num)
+  Next
+End Sub
+
+
+
+
+Sub test3333()
+  Call データ出力("testBlank", Space(100000))
+End Sub
+
+
+Sub testssss()
+  Debug.Print Len("あ")
+End Sub
+
+
+
