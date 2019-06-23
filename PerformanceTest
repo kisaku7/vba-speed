@@ -1,0 +1,6 @@
+  Dim timerObj As TimerObject: Set timerObj = New TimerObject
+  Dim booster As PerformanceBooster: Set booster = New PerformanceBooster
+  
+' testcode
+
+  timerObj.ReportTimer
