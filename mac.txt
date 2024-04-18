@@ -1,0 +1,88 @@
+// 推奨ショートカット: Ctrl-Shift+F3
+
+// GOTOも？
+// section(節)と段落はかぶってもいい？
+
+// 重複に備えて、追試も可能
+
+loaddll "HmJre.dll";
+
+
+
+$searchSectionName = "(?<=^.{6} .+ PERFORM +)(?!(VARYING|UNTIL))[^ ]+(?=( |$))";
+
+
+
+
+$sectionName = "";
+$lineText = getlinetext();
+#n = dllfunc("FindRegular", $searchSectionName, $lineText, 0);
+if( #n >= 0 ) {
+    $sectionName = midstr($lineText, #n, dllfunc("GetLastMatchLength"));
+    $sectionName = strreplace(strreplace($sectionName,"\r",""),"\n","");
+} else {
+    $searchSectionRE = "(?<=^.{6} +)[^ ]+(?= +SECTION)";
+    #n = dllfunc("FindRegular", $searchSectionRE, $lineText, 0);
+    if( #n >= 0 ) {
+      $sectionName = midstr($lineText, #n, dllfunc("GetLastMatchLength"));
+      $sectionName = strreplace(strreplace($sectionName,"\r",""),"\n","");
+    }
+}
+
+
+
+
+/*
+    searchdown2 $searchSectionRE, regular;
+    #resultSearchDown = result;
+    gosearchstarted;
+
+    searchup2 $searchSectionRE, regular;
+    #resultSearchUp = result;
+    gosearchstarted;
+
+    if( #resultSearchDown != 0 || #resultSearchUp != 0 ) {
+      escape;  // 選択状態を解除
+      moveto 1, linecount;
+      searchup2 $searchSectionRE, regular;
+    } else {
+      message "SECTION定義無し";
+    }
+*/
+
+if( $sectionName != "" ) {
+    $searchSectionRE = "(?<=^.{6} +)" + $sectionName + "(?= +SECTION)";
+
+    #hitRow = 0;
+    #hitCol = 0;
+
+    #lines = linecount;
+    #rowStart = (y + 1) + 1;
+    if(#rowStart == 1) {
+      #rowEnd = #lines;
+    } else {
+      #rowEnd = #rowStart - 1;
+    }
+
+    #row = #rowStart;
+    while(#row != #rowEnd) {
+      $searchSectionLineText = getlinetext(#row);
+      #n2 = dllfunc("FindRegular", $searchSectionRE, $searchSectionLineText, 0);
+      if( #n2 >= 0 ) {
+        #hitRow = #row;
+        #hitCol = #n2;
+        break;
+      }
+      #row = #row + 1;
+      if( #row > #lines ) #row = 1;
+    }
+    
+    if(#hitRow >= 0){
+      disabledraw;
+      escape;  // 選択状態を解除
+      moveto2 #hitCol, #hitRow;
+      enabledraw y;
+    } else {
+      message "定義無し：" + $sectionName + " SECTION"; 
+    }
+}
