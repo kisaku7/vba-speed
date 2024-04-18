@@ -2,14 +2,14 @@
 
 // SECTION,GOTO x section(節),段落
 // 重複に備えて、追試も可能
-// searchSourceと、searchTarget 複数持てるようにする。
+// searchSourceと、searchTarget 複数持てるようにする。。
 
 loaddll "HmJre.dll";
 
 
 
 $searchSectionName1 = "(?<=^.{6} .+ PERFORM +)(?!(VARYING|UNTIL))[^ ]+(?=( |$))";
-$searchSectionName2 = "(?<=^.{6} .+ GO +TO +)[^( |\\.)]+";
+$searchSectionName2 = "(?<=^.{6} .+ GO +TO +)[^( |\\.)]+(?=( |\\.|$))";
 $searchSectionName3 = "(?<=^.{6} )[^ ]+(?= +SECTION)";
 $searchSectionName4 = "(?<=^.{6} )[^( |\\.)]+(?=( |\\.|$))";
 
