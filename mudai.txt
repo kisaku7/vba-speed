@@ -1,0 +1,296 @@
+[TagJumpModule.mac]
+
+
+// 推奨ショートカット: Ctrl+Shift+F3
+
+// 重複に備えて、追試も可能
+// searchSourceと、searchTarget 複数持てるようにする。。
+
+// 大文字小文字区別有り(FindGeneralの第二引数)
+
+// 検索機能は使いたくない。検索キーワードにセットされるので。
+
+loaddll "HmJre.dll";
+
+
+
+$INI_FILE_NAME = "TagJumpSettings.ini";
+$SECTION_NAME  = "TAG_JUMP";
+$BASE_KEY_NAME_SEARCH           = "SEARCH"; // 必須
+$BASE_KEY_NAME_TARGET           = "TARGET"; // 必須
+$BASE_KEY_NAME_FILE_EXTENSION   = "FL-EXT"; // 任意
+$BASE_KEY_NAME_FILE_NAME_REGEXP = "NAMERE"; // 任意
+$BASE_KEY_NAME_MODE             = "EXMODE";   // 任意
+
+
+
+call Main;
+endmacro;
+
+
+
+/**
+ * メイン処理
+ * @return なし
+ * @param なし
+ */
+Main:
+  $paramMode = getarg(0);
+  call ReadIni;
+  call SearchToTarget;
+  return;
+
+
+
+/**
+ * initファイルから対象のTag
+ * @return ($searchList)文字列配列 検索用正規表現のリスト
+ *         ($targetList)文字列配列 標的用正規表現のリスト
+ *         ($fileExtensionList)文字列 対象の拡張子
+ *         ($fileNameRegExpList)文字列 対象のファイル名(正規表現)
+ *         ($modeList)文字列 指定モード
+ * @param なし
+ */
+ReadIni:
+  call GetIniPath;
+  $$iniPath = $$return;
+  ##numList  = 0;
+  while(true){
+
+    ##numSearch = 0;
+    while(true){
+      $$searchRegExp = getinistr($$iniPath, $SECTION_NAME, $BASE_KEY_NAME_SEARCH + str(##numList + 1) + "-" + str(##numSearch + 1));
+      if( $$searchRegExp == "" ) break;
+      ##numSearch = ##numSearch + 1;
+      $$search[##numSearch - 1] = $$searchRegExp;
+    }
+
+    ##numTarget = 0;
+    while(true){
+      $$targetRegExp = getinistr($$iniPath, $SECTION_NAME, $BASE_KEY_NAME_TARGET + str(##numList + 1) + "-" + str(##numTarget + 1));
+      if( $$targetRegExp == "" ) break;
+      ##numTarget = ##numTarget + 1;
+      $$target[##numTarget - 1] = $$targetRegExp;
+    }
+
+    $$fileExtension = getinistr($$iniPath, $SECTION_NAME, $BASE_KEY_NAME_FILE_EXTENSION + str(##numList + 1));
+    $$fileNameRegExp = getinistr($$iniPath, $SECTION_NAME, $BASE_KEY_NAME_FILE_NAME_REGEXP + str(##numList + 1));
+    $$mode = getinistr($$iniPath, $SECTION_NAME, $BASE_KEY_NAME_MODE + str(##numList + 1));
+
+    if( ##numSearch == 0 && ##numTarget == 0 && $$fileExtension == "" && $$fileNameRegExp == "" && $$mode == "" ) {
+      break;
+    }
+
+    ##numList = ##numList + 1;
+
+    ##numSearchInput = 0;
+    while(true){
+      if( (##numSearchInput + 1) > ##numSearch ) break;
+      ##numSearchInput = ##numSearchInput + 1;
+      $searchList[##numList - 1][##numSearchInput - 1] = $$search[##numSearchInput - 1];
+    }
+
+    ##numTargetInput = 0;
+    while(true){
+      if( (##numTargetInput + 1) > ##numTarget ) break;
+      ##numTargetInput = ##numTargetInput + 1;
+      $targetList[##numList - 1][##numTargetInput - 1] = $$target[##numTargetInput - 1];
+    }
+
+    $fileExtensionList[##numList - 1] = $$fileExtension;
+    $fileNameRegExpList[##numList - 1] = $$fileNameRegExp;
+    $modeList[##numList - 1] = $$mode;
+
+  }
+  return;
+
+
+
+/**
+ * iniファイルパスを返す
+ * @return なし
+ * @param なし
+ */
+GetIniPath:
+  return macrodir + "\\" + $INI_FILE_NAME;
+
+
+
+/**
+ * 検索用正規表現→標的用正規表現
+ * @return なし
+ * @param なし
+ */
+SearchToTarget:
+  call GetIndexInSearchList;
+  if( $searchString != "" ) {
+    call GetRowInTargetList;
+  }
+  return;
+
+
+
+/**
+ * カーソル行でヒットした検索用正規表現の検索文字列とIndexを返す。
+ * モード＆拡張子判断有り。
+ * @return ($searchString)文字列  カーソル行でヒットした検索文字列
+ *         (#searchIndex)数値   カーソル行でヒットした検索用正規表現リストのIndex
+ * @param  ($searchList)文字列配列 検索用正規表現のリスト
+ *         ($fileExtensionList)文字列 対象の拡張子
+ *         ($fileNameRegExpList)文字列 対象のファイル名(正規表現)
+ *         ($modeList)文字列 指定モード
+ */
+GetIndexInSearchList:
+  $$lineText = gettext2(0, ytolineno(x, y), linelen, ytolineno(x, y));
+  $$str = "";
+  ##index = 0;
+  while(true) {
+    $$fileExtension = $fileExtensionList[##index];
+    $$fileNameRegExp = $fileNameRegExpList[##index];
+    $$mode = $modeList[##index];
+    if( $searchList[##index][0] == "" ) break;
+    if( $$mode == $paramMode
+        && ( ( $$fileExtension == ""   && $$fileNameRegExp == "" )
+           ||  ( $$fileExtension != ""   && filetype == tolower("." + $$fileExtension) )
+           ||  ( $$fileNameRegExp != "" && dllfunc("FindRegular", $$fileNameRegExp, basename2, 0) != 0 ) ) ) {
+
+      ##numSearch = 0;
+      while(true) {
+        $$searchRegExp = $searchList[##index][##numSearch];
+        if( $$searchRegExp == "" ) break;
+        ##hitStart = dllfunc("FindGeneral", false, true, false, $$searchRegExp, $$lineText, 0);
+        if( ##hitStart >= 0 ) {
+          ##hitEnd   = dllfunc("GetLastMatchLength");
+          $$str = midstr($$lineText, ##hitStart, ##hitEnd);
+          break;
+        }
+        ##numSearch = ##numSearch + 1;
+      }
+      if( $$str != "" ) break;
+    }
+    ##index = ##index + 1;
+  }
+  $searchString = "";
+  #searchIndex = -1;
+  if( $$str != "" ) {
+    $searchString = $$str;
+    #searchIndex = ##index;
+  }
+  return;
+
+
+
+/**
+ * 検索文字列から、カーソル行を起点に標的用正規表現にヒットする行を探索
+ * @return なし
+ * @param  ($targetList)文字列配列 検索用正規表現のリスト
+ *         ($searchString)文字列  カーソル行でヒットした検索文字列
+ *         (#searchIndex)数値   カーソル行でヒットした検索用正規表現リストのIndex
+ */
+GetRowInTargetList:
+  disabledraw;
+
+  ##hitRow = -1;
+  ##hitCol = -1;
+
+  ##lines = linecount;
+  ##presX = x;
+  ##presY = y;
+  ##rowStart = ytolineno(x, y) + 1;
+  ##rowEnd   = ytolineno(x, y);
+
+  ##row = ##rowStart;
+  while(true) {
+    moveto2 1, ##row;
+    $$lineText = gettext2(0, ytolineno(x, y), linelen, ytolineno(x, y));
+    ##numTarget = 0;
+    while(true) {
+      $$targetRegExp = $targetList[#searchIndex][##numTarget];
+      if( $$targetRegExp == "" ) break;
+      ##hitStart = dllfunc("FindGeneral", false, true, false, $$targetRegExp, $$lineText, 0);
+      if( ##hitStart >= 0 ) {
+        ##hitEnd   = dllfunc("GetLastMatchLength");
+        $$hitString = midstr($$lineText, ##hitStart, ##hitEnd);
+        if( $searchString == $$hitString ) {
+          ##hitRow = ##row;
+          ##hitCol = ##hitStart;
+          break;
+        }
+      }
+      ##numTarget = ##numTarget + 1;
+    }
+
+    if( ##hitRow != -1 ) break;
+
+    if( ##row == ##rowEnd ) break;
+
+    ##row = ##row + 1;
+    if( ##row > ##lines ) ##row = 1;
+  }
+  
+  if(##hitRow != -1){
+    moveto2 ##hitCol, ##hitRow;
+  } else {
+    message "対象無し:[" + $searchString + "]"; 
+    moveto ##presX, ##presY;
+  }
+
+  enabledraw y;
+
+  return;
+
+-----------------------------------------------------------------------------------------------
+[TagJumpInvoke_main.mac]
+
+
+$mode = "MAIN";
+execmacro currentmacrodirectory + "\\TagJumpModule.mac", $mode;
+endmacro;
+
+
+
+
+-----------------------------------------------------------------------------------------------
+[TagJumpInvoke_re.mac]
+
+
+$mode = "RE";
+execmacro currentmacrodirectory + "\\TagJumpModule.mac", $mode;
+endmacro;
+
+
+
+-----------------------------------------------------------------------------------------------
+[TagJumpSettings.ini]
+[TAG_JUMP]
+
+SEARCH1-1="(?<=^.{6} .+ PERFORM +)(?!(VARYING|UNTIL))[^ ]+(?=( |$))"
+SEARCH1-2="(?<=^.{6} .+ GO +TO +)[^( |\\.)]+"
+SEARCH1-3="(?<=^.{6} )[^ ]+(?= +SECTION)"
+SEARCH1-4="(?<=^.{6} )[^( |\\.)]+(?=( |\\.|$))"
+TARGET1-1="(?<=^.{6} )[^ ]+(?= +SECTION)"
+TARGET1-2="(?<=^.{6} )[^( |\\.)]+(?=( |\\.|$))"
+FL-EXT1="???"
+EXMODE1="MAIN"
+
+TARGET2-1="(?<=^.{6} .+ PERFORM +)(?!(VARYING|UNTIL))[^ ]+(?=( |$))"
+TARGET2-2="(?<=^.{6} .+ GO +TO +)[^( |\\.)]+"
+SEARCH2-1="(?<=^.{6} )[^ ]+(?= +SECTION)"
+SEARCH2-2="(?<=^.{6} )[^( |\\.)]+(?=( |\\.|$))"
+FL-EXT2="???"
+EXMODE2="RE"
+
+	
+SEARCH3-1="(?<=^[^']*GOSUB +)[^( |\t|')]+(?=( |$))"
+SEARCH3-2="(?<=^[^']*GOTO +)(?!0)[^( |\t|')]+(?=( |$))"
+SEARCH3-3="^[^( |\t|'|\r|\n)]+(?=( |:|$))"
+TARGET3-1="^[^( |\t|'|\r|\n)]+(?=( |:|$))"
+FL-EXT3="???"
+EXMODE3="MAIN"
+
+TARGET4-1="(?<=^[^']*GOSUB +)[^( |\t|')]+(?=( |$))"
+TARGET4-2="(?<=^[^']*GOTO +)(?!0)[^( |\t|')]+(?=( |$))"
+SEARCH4-1="^[^( |\t|'|\r|\n)]+(?=( |:|$))"
+FL-EXT4="???"
+EXMODE4="RE"
+
