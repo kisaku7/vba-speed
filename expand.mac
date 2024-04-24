@@ -1,0 +1,162 @@
+// 推奨ショートカット: Ctrl+@
+
+// 大文字小文字区別有り(FindGeneralの第二引数)
+
+loaddll "HmJre.dll";
+
+
+
+$INI_FILE_NAME = "ExpandRegionSettings.ini";
+$SECTION_NAME  = "EXPAND_REGION";
+$BASE_KEY_NAME_REGION           = "REGION"; // 必須
+$BASE_KEY_NAME_FILE_EXTENSION   = "FL-EXT"; // 任意
+$BASE_KEY_NAME_FILE_NAME_REGEXP = "NAMERE"; // 任意
+
+
+
+call Main;
+endmacro;
+
+
+
+/**
+ * メイン処理
+ * @return なし
+ * @param なし
+ */
+Main:
+  call ReadIni;
+  call ExpandRegion;
+  return;
+
+
+
+/**
+ * initファイルから対象のTag
+ * 拡張子判断あり
+ * @return ($regionList)文字列配列 正規表現のリスト
+ * @param なし
+ */
+ReadIni:
+  call GetIniPath;
+  $$iniPath = $$return;
+  ##numList  = 0;
+  while(true){
+    if( getinistr($$iniPath, $SECTION_NAME, $BASE_KEY_NAME_REGION + str(##numList + 1) + "-" + "1") == "" ){
+      break;
+    }
+    $$fileExtension  = getinistr($$iniPath, $SECTION_NAME, $BASE_KEY_NAME_FILE_EXTENSION   + str(##numList + 1));
+    $$fileNameRegExp = getinistr($$iniPath, $SECTION_NAME, $BASE_KEY_NAME_FILE_NAME_REGEXP + str(##numList + 1));
+    if(    ( $$fileExtension  == "" && $$fileNameRegExp == "" )
+        || ( $$fileExtension  != "" && filetype == tolower("." + $$fileExtension) )
+        || ( $$fileNameRegExp != "" && dllfunc("FindRegular", $$fileNameRegExp, basename2, 0) >= 0 ) ) {
+      ##numRegion = 0;
+      while(true){
+        $$regionRegExp = getinistr($$iniPath, $SECTION_NAME, $BASE_KEY_NAME_REGION + str(##numList + 1) + "-" + str(##numRegion + 1));
+        if( $$regionRegExp == "" ) break;
+        ##numRegion = ##numRegion + 1;
+        $regionList[##numRegion - 1] = $$regionRegExp;
+      }
+      break;
+    }
+    ##numList = ##numList + 1;
+  }
+  return;
+
+
+
+/**
+ * iniファイルパスを返す
+ * @return なし
+ * @param なし
+ */
+GetIniPath:
+  return macrodir + "\\" + $INI_FILE_NAME;
+
+
+
+/**
+ * 
+ * @return なし
+ * @param なし
+ */
+ExpandRegion:
+  if( selecting == 0 ){
+    ##origLeft = x;
+    ##origRight = x;
+  } else {
+    ##origLeft = seltopx;
+    ##origRight = selendx;
+    escape;
+  }
+  golineend;
+  ##maxCol = x;
+  ##row = y;
+
+  ##presLeft = ##origLeft;
+  ##presRight = ##origRight;
+  ##numRegion  = 0;
+  while(true){
+    if( ##presLeft <= 0 && ##maxCol <= ##presRight ) break;
+    if( $regionList[##numRegion] == ""){
+      ##presLeft  = 0;
+      ##presRight = ##maxCol;
+      break;
+    }
+
+    ##tryRight = ##presRight;
+    while(true){
+      if( ##maxCol <= ##presRight ) break;
+      $$strRight = gettext(##presLeft, ##row, ##tryRight, ##row);
+      if($$strRight != ""){
+        ##hitLeft = dllfunc("FindGeneral", true, true, false, $regionList[##numRegion], $$strRight, 0);
+        if( ##hitLeft < 0 ) break;
+        ##hitRight = ##hitLeft + dllfunc("GetLastMatchLength");
+        if( ##presLeft < (##presLeft + ##hitLeft) ) break;
+        if( (##presLeft + ##hitRight) < ##tryRight) break;
+      }
+      ##presRight = ##tryRight;
+      ##tryRight  = ##tryRight + 1;
+    }
+
+    ##tryLeft = ##presLeft;
+    while(true){
+      if( ##presLeft <= 0 ) break;
+      $$strLeft = gettext(##tryLeft, ##row, ##presRight, ##row);
+      if($$strLeft != ""){
+        ##hitLeft = dllfunc("FindGeneral", true, true, false, $regionList[##numRegion], $$strLeft, 0);
+        if( ##hitLeft < 0 ) break;
+        ##hitRight = ##hitLeft + dllfunc("GetLastMatchLength");
+        if( ##tryLeft < (##tryLeft + ##hitLeft) ) break;
+        if( (##tryLeft + ##hitRight) < ##presRight) break;
+      }
+      ##presLeft = ##tryLeft;
+      ##tryLeft  = ##tryLeft - 1;
+    }
+
+    if( ##presLeft < ##origLeft || ##origRight < ##presRight ){
+      break;
+    }
+
+    ##numRegion = ##numRegion + 1;
+  }
+
+  moveto ##presLeft, ##row;
+  beginsel;
+  moveto ##presRight, ##row;
+
+  return;
+
+
+
+-------------------------------------------------------------------
+
+[EXPAND_REGION]
+
+REGION1-1="([A-Z][a-z0-9]+|[a-z0-9]+)"
+REGION1-2="[a-zA-Z0-9]+"
+REGION1-3="[^( |#|;|\t|\.|:|\+|\-|\(|\)|\[|\]|\"|\'|\!|\?|\$|\&|\||\*|\/|,|_)]+"
+REGION1-4="[^( |#|;|\t|\.|:|\+|\(|\)|\[|\]|\"|\'|\!|\?|\$|\&|\||\*|\/|,)]+"
+REGION1-5="[^( |;|\t|\.|\+|\(|\)|\[|\]|\"|\'||,)]+"
+REGION1-6="[^( |\t|\.|\(|\)|\[|\]|\"|\'|,)]+"
+REGION1-7="[^( |\t)]"
