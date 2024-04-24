@@ -1,7 +1,5 @@
 [TagJumpModule.mac]
-
-
-// 推奨ショートカット: Ctrl+Shift+F3
+// 推奨ショートカット: Ctrl+Alt+G
 
 // 重複に備えて、追試も可能
 // searchSourceと、searchTarget 複数持てるようにする。。
@@ -20,7 +18,7 @@ $BASE_KEY_NAME_SEARCH           = "SEARCH"; // 必須
 $BASE_KEY_NAME_TARGET           = "TARGET"; // 必須
 $BASE_KEY_NAME_FILE_EXTENSION   = "FL-EXT"; // 任意
 $BASE_KEY_NAME_FILE_NAME_REGEXP = "NAMERE"; // 任意
-$BASE_KEY_NAME_MODE             = "EXMODE";   // 任意
+$BASE_KEY_NAME_MODE             = "EXMODE"; // 任意
 
 
 
@@ -158,7 +156,7 @@ GetIndexInSearchList:
       while(true) {
         $$searchRegExp = $searchList[##index][##numSearch];
         if( $$searchRegExp == "" ) break;
-        ##hitStart = dllfunc("FindGeneral", false, true, false, $$searchRegExp, $$lineText, 0);
+        ##hitStart = dllfunc("FindGeneral", true, true, false, $$searchRegExp, $$lineText, 0);
         if( ##hitStart >= 0 ) {
           ##hitEnd   = dllfunc("GetLastMatchLength");
           $$str = midstr($$lineText, ##hitStart, ##hitEnd);
@@ -198,6 +196,7 @@ GetRowInTargetList:
   ##presY = y;
   ##rowStart = ytolineno(x, y) + 1;
   ##rowEnd   = ytolineno(x, y);
+  ##screenTopY = screentopy;
 
   ##row = ##rowStart;
   while(true) {
@@ -207,7 +206,7 @@ GetRowInTargetList:
     while(true) {
       $$targetRegExp = $targetList[#searchIndex][##numTarget];
       if( $$targetRegExp == "" ) break;
-      ##hitStart = dllfunc("FindGeneral", false, true, false, $$targetRegExp, $$lineText, 0);
+      ##hitStart = dllfunc("FindGeneral", true, true, false, $$targetRegExp, $$lineText, 0);
       if( ##hitStart >= 0 ) {
         ##hitEnd   = dllfunc("GetLastMatchLength");
         $$hitString = midstr($$lineText, ##hitStart, ##hitEnd);
@@ -230,14 +229,16 @@ GetRowInTargetList:
   
   if(##hitRow != -1){
     moveto2 ##hitCol, ##hitRow;
+    enabledraw ##hitRow;
   } else {
     message "対象無し:[" + $searchString + "]"; 
     moveto ##presX, ##presY;
+    enabledraw ##screenTopY;
   }
 
-  enabledraw y;
-
   return;
+
+
 
 -----------------------------------------------------------------------------------------------
 [TagJumpInvoke_main.mac]
@@ -264,33 +265,38 @@ endmacro;
 [TagJumpSettings.ini]
 [TAG_JUMP]
 
-SEARCH1-1="(?<=^.{6} .+ PERFORM +)(?!(VARYING|UNTIL))[^ ]+(?=( |$))"
-SEARCH1-2="(?<=^.{6} .+ GO +TO +)[^( |\\.)]+"
+
+SEARCH1-1="(?<=^.{6} .+ PERFORM +)(?!(VARYING|UNTIL))[^( |\.)]+"
+SEARCH1-2="(?<=^.{6} .+ GO +TO +)[^( |\.)]+"
 SEARCH1-3="(?<=^.{6} )[^ ]+(?= +SECTION)"
-SEARCH1-4="(?<=^.{6} )[^( |\\.)]+(?=( |\\.|$))"
+SEARCH1-4="(?<=^.{6} )[^( |\.)]+"
 TARGET1-1="(?<=^.{6} )[^ ]+(?= +SECTION)"
-TARGET1-2="(?<=^.{6} )[^( |\\.)]+(?=( |\\.|$))"
-FL-EXT1="???"
+TARGET1-2="(?<=^.{6} )[^( |\.)]+"
+FL-EXT1=""
 EXMODE1="MAIN"
 
-TARGET2-1="(?<=^.{6} .+ PERFORM +)(?!(VARYING|UNTIL))[^ ]+(?=( |$))"
-TARGET2-2="(?<=^.{6} .+ GO +TO +)[^( |\\.)]+"
-SEARCH2-1="(?<=^.{6} )[^ ]+(?= +SECTION)"
-SEARCH2-2="(?<=^.{6} )[^( |\\.)]+(?=( |\\.|$))"
-FL-EXT2="???"
+SEARCH2-1="(?<=^.{6} .+ PERFORM +)(?!(VARYING|UNTIL))[^( |\.)]+"
+SEARCH2-2="(?<=^.{6} .+ GO +TO +)[^( |\.)]+"
+SEARCH2-3="(?<=^.{6} )[^ ]+(?= +SECTION)"
+SEARCH2-4="(?<=^.{6} )[^( |\.)]+"
+TARGET2-1="(?<=^.{6} .+ PERFORM +)(?!(VARYING|UNTIL))[^( |\.)]+"
+TARGET2-2="(?<=^.{6} .+ GO +TO +)[^( |\.)]+"
+FL-EXT2=""
 EXMODE2="RE"
 
-	
-SEARCH3-1="(?<=^[^']*GOSUB +)[^( |\t|')]+(?=( |$))"
-SEARCH3-2="(?<=^[^']*GOTO +)(?!0)[^( |\t|')]+(?=( |$))"
-SEARCH3-3="^[^( |\t|'|\r|\n)]+(?=( |:|$))"
-TARGET3-1="^[^( |\t|'|\r|\n)]+(?=( |:|$))"
-FL-EXT3="???"
+
+
+SEARCH3-1="(?<=^[^']*GOSUB +)[^( |\t|')]+"
+SEARCH3-2="(?<=^[^']*GOTO +)(?!0)[^( |\t|')]+"
+SEARCH3-3="^[^( |\t|:|')]+"
+TARGET3-1="^[^( |\t|:|')]+"
+FL-EXT3=""
 EXMODE3="MAIN"
 
-TARGET4-1="(?<=^[^']*GOSUB +)[^( |\t|')]+(?=( |$))"
-TARGET4-2="(?<=^[^']*GOTO +)(?!0)[^( |\t|')]+(?=( |$))"
-SEARCH4-1="^[^( |\t|'|\r|\n)]+(?=( |:|$))"
-FL-EXT4="???"
+SEARCH4-1="(?<=^[^']*GOSUB +)[^( |\t|')]+"
+SEARCH4-2="(?<=^[^']*GOTO +)(?!0)[^( |\t|')]+"
+SEARCH4-3="^[^( |\t|:|')]+"
+TARGET4-1="(?<=^[^']*GOSUB +)[^( |\t|')]+"
+TARGET4-2="(?<=^[^']*GOTO +)(?!0)[^( |\t|')]+"
+FL-EXT4=""
 EXMODE4="RE"
-
