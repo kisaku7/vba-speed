@@ -8,9 +8,9 @@ loaddll "HmJre.dll";
 
 $INI_FILE_NAME = "ExpandRegionSettings.ini";
 $SECTION_NAME  = "EXPAND_REGION";
-$BASE_KEY_NAME_REGION           = "REGION"; // 必須
-$BASE_KEY_NAME_FILE_EXTENSION   = "FL-EXT"; // 任意
-$BASE_KEY_NAME_FILE_NAME_REGEXP = "NAMERE"; // 任意
+$BASE_KEY_NAME_REGION           = "REGION";           // 必須
+$BASE_KEY_NAME_FILE_EXTENSION   = "FILE_EXTENSION";   // 任意
+$BASE_KEY_NAME_FILE_NAME_REGEXP = "FILE_NAME_REGEXP"; // 任意
 
 
 
@@ -146,17 +146,3 @@ ExpandRegion:
   moveto ##presRight, ##row;
 
   return;
-
-
-
--------------------------------------------------------------------
-
-[EXPAND_REGION]
-
-REGION1-1="([A-Z][a-z0-9]+|[a-z0-9]+)"
-REGION1-2="[a-zA-Z0-9]+"
-REGION1-3="[^( |#|;|\t|\.|:|\+|\-|\(|\)|\[|\]|\"|\'|\!|\?|\$|\&|\||\*|\/|,|_)]+"
-REGION1-4="[^( |#|;|\t|\.|:|\+|\(|\)|\[|\]|\"|\'|\!|\?|\$|\&|\||\*|\/|,)]+"
-REGION1-5="[^( |;|\t|\.|\+|\(|\)|\[|\]|\"|\'||,)]+"
-REGION1-6="[^( |\t|\.|\(|\)|\[|\]|\"|\'|,)]+"
-REGION1-7="[^( |\t)]"
