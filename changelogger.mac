@@ -4,11 +4,11 @@ loaddll "HmJre.dll";
 
 $INI_FILE_NAME = "ChangeLoggerSettings.ini";
 $SECTION_NAME  = "CHANGE_LOGGER";
-$BASE_KEY_NAME_OPTION           = "OPTION"; // 必須
-$BASE_KEY_NAME_LOG_START        = "LOG--S"; // 必須
-$BASE_KEY_NAME_LOG_END          = "LOG--E"; // 必須
-$BASE_KEY_NAME_FILE_EXTENSION   = "FL-EXT"; // 任意
-$BASE_KEY_NAME_FILE_NAME_REGEXP = "NAMERE"; // 任意
+$BASE_KEY_NAME_OPTION           = "OPTION";           // 必須
+$BASE_KEY_NAME_LOG_START        = "LOG_START";        // 必須
+$BASE_KEY_NAME_LOG_END          = "LOG_END";          // 必須
+$BASE_KEY_NAME_FILE_EXTENSION   = "FILE_EXTENSION";   // 任意
+$BASE_KEY_NAME_FILE_NAME_REGEXP = "FILE_NAME_REGEXP"; // 任意
 
 
 
@@ -172,11 +172,11 @@ CheckExistsIni:
   call GetIniPath;
   $$iniPath = $$return;
   if( !existfile( $$iniPath ) ) {
-    writeinistr $$iniPath, $SECTION_NAME, $BASE_KEY_NAME_OPTION + "1", "\"\"";
-    writeinistr $$iniPath, $SECTION_NAME, " " + $BASE_KEY_NAME_LOG_START + "1", "\"\"";
-    writeinistr $$iniPath, $SECTION_NAME, " " + $BASE_KEY_NAME_LOG_END + "1", "\"\"";
-    writeinistr $$iniPath, $SECTION_NAME, " " + $BASE_KEY_NAME_FILE_EXTENSION + "1", "\"\"";
-    writeinistr $$iniPath, $SECTION_NAME, " " + $BASE_KEY_NAME_FILE_NAME_REGEXP + "1", "\"\"";
+    writeinistr $$iniPath, $SECTION_NAME,           $BASE_KEY_NAME_OPTION + "1", "\"\"";
+    writeinistr $$iniPath, $SECTION_NAME,        $BASE_KEY_NAME_LOG_START + "1", "\"\"";
+    writeinistr $$iniPath, $SECTION_NAME,          $BASE_KEY_NAME_LOG_END + "1", "\"\"";
+    writeinistr $$iniPath, $SECTION_NAME,   $BASE_KEY_NAME_FILE_EXTENSION + "1", "\"\"";
+    writeinistr $$iniPath, $SECTION_NAME, $BASE_KEY_NAME_FILE_NAME_REGEXP + "1", "\"\"";
   }
   return;
 
