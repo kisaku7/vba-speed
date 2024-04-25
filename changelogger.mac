@@ -1,0 +1,191 @@
+// C-\に割り当て推奨
+
+loaddll "HmJre.dll";
+
+$INI_FILE_NAME = "ChangeLoggerSettings.ini";
+$SECTION_NAME  = "CHANGE_LOGGER";
+$BASE_KEY_NAME_OPTION           = "OPTION"; // 必須
+$BASE_KEY_NAME_LOG_START        = "LOG--S"; // 必須
+$BASE_KEY_NAME_LOG_END          = "LOG--E"; // 必須
+$BASE_KEY_NAME_FILE_EXTENSION   = "FL-EXT"; // 任意
+$BASE_KEY_NAME_FILE_NAME_REGEXP = "NAMERE"; // 任意
+
+
+
+call Main;
+endmacro;
+
+
+
+/**
+ * メインサブルーチン
+ * @return なし
+ * @param なし
+ */
+Main:
+  call OpenOptionList;
+  return;
+
+
+
+/**
+ * オプションリストメイン
+ * @return なし
+ * @param なし
+ */
+OpenOptionList:
+  call ReadOptionList;
+  call OpenOptionListMenu;
+  if( ##return == #numOptions -1 || ##return == 0 ){
+  }else if( ##return == #numOptions ){
+    call CheckExistsIni;
+    call GetIniPath;
+    openfile "/i " + $$return;
+  }else{
+     begingroupundo;
+     call GetLogPosition;
+     ##option = ##return;
+     call InsertLogLine ##option;
+     endgroupundo;
+  }
+  return;
+
+
+
+/**
+ * メニュー表示用にリストを取得
+ * 拡張子判断有り
+ * @return ($optionList)文字列配列 オプション名リスト
+ *           最後から二つの分の要素に、"-----"と"設定"を付加
+ *         ($numOptions)数値 オプションリスト数
+ *         ($logStart)文字列配列 変更履歴START
+ *         ($logEnd)文字列配列 変更履歴END
+ * @param なし
+ */
+ReadOptionList:
+  call GetIniPath;
+  $$iniPath = $$return;
+  #numOptions = 0;
+  ##numList    = 0;
+  while(true){
+    $$optionName = getinistr($$iniPath, $SECTION_NAME, $BASE_KEY_NAME_OPTION + str(##numList + 1));
+    if( $$optionName == "" ) break;
+    ##numList = ##numList + 1;
+    $$fileExtension  = getinistr($$iniPath, $SECTION_NAME, $BASE_KEY_NAME_FILE_EXTENSION   + str(##numList));
+    $$fileNameRegExp = getinistr($$iniPath, $SECTION_NAME, $BASE_KEY_NAME_FILE_NAME_REGEXP + str(##numList));
+    if(    ( $$fileExtension  == "" && $$fileNameRegExp == "" )
+        || ( $$fileExtension  != "" && filetype == tolower("." + $$fileExtension) )
+        || ( $$fileNameRegExp != "" && dllfunc("FindRegular", $$fileNameRegExp, basename2, 0) >= 0 ) ) {
+      #numOptions = #numOptions + 1;
+      $optionList[#numOptions - 1] = $$optionName;
+      $logStart[#numOptions - 1] = getinistr($$iniPath, $SECTION_NAME, $BASE_KEY_NAME_LOG_START + str(##numList));
+      $logEnd[#numOptions - 1] = getinistr($$iniPath, $SECTION_NAME, $BASE_KEY_NAME_LOG_END + str(##numList));
+    }
+  }
+  #numOptions = #numOptions + 1;
+  $optionList[#numOptions - 1] = "-----";
+  #numOptions = #numOptions + 1;
+  $optionList[#numOptions - 1] = "設定";
+  return;
+
+
+
+/**
+ * メニュー用のリストを表示
+ * @return 数値 オプションリスト番号
+ * @param ($optionList)文字列配列 オプション名リスト
+ *        ($numOptions)数値 オプションリスト数
+ */
+OpenOptionListMenu:
+  menuarray $optionList, #numOptions;
+  return result;
+
+
+
+/**
+ * 変更履歴を書くための行を開ける
+ * @return (#startX)
+ *         (#startY)
+ *         (#posX)
+ *         (#posY)
+ *         (#endX)
+ *         (#endY)
+ *       挿入箇所のスペース取り
+ * @param なし
+ */
+GetLogPosition:
+  if( selecting == 0 ){
+    golineend;
+    if( x > 0 ) insertreturn;
+    ##selY1 = y;
+    ##selY2 = y;
+  }else{
+    ##selY1 = seltopy;
+    ##selY2 = selendy;
+    if( selendx == 0 )  ##selY2 = ##selY2 - 1;
+    escape;
+  }
+  moveto 0, ##selY1;
+  #startX = x;
+  #startY = y;
+  insert "\n";
+  moveto 0, ##selY2 + 1;
+  golineend;
+  #posX = x;
+  #posY = y;
+  insert "\n";
+  #endX = x;
+  #endY = y;
+  return;
+
+
+
+/**
+ * @return 指定positionにLogを挿入
+ * @param 数値 オプション番号
+ *        (#startX)
+ *        (#startY)
+ *        (#posX)
+ *        (#posY)
+ *        (#endX)
+ *        (#endY)
+ *        ($logStart)文字列配列 変更履歴START
+ *        ($logEnd)文字列配列 変更履歴END
+ */
+InsertLogLine:
+  ##option = ##1;
+  moveto #startX, #startY;
+  insert $logStart[##option - 1];
+  moveto #endX, #endY;
+  insert $logEnd[##option - 1];
+  moveto #posX, #posY;
+  return;
+
+
+
+/**
+ * ファイルの存在を確認して、なければ作成する
+ * @return なし
+ * @param なし
+ */
+CheckExistsIni:
+  call GetIniPath;
+  $$iniPath = $$return;
+  if( !existfile( $$iniPath ) ) {
+    writeinistr $$iniPath, $SECTION_NAME, $BASE_KEY_NAME_OPTION + "1", "\"\"";
+    writeinistr $$iniPath, $SECTION_NAME, " " + $BASE_KEY_NAME_LOG_START + "1", "\"\"";
+    writeinistr $$iniPath, $SECTION_NAME, " " + $BASE_KEY_NAME_LOG_END + "1", "\"\"";
+    writeinistr $$iniPath, $SECTION_NAME, " " + $BASE_KEY_NAME_FILE_EXTENSION + "1", "\"\"";
+    writeinistr $$iniPath, $SECTION_NAME, " " + $BASE_KEY_NAME_FILE_NAME_REGEXP + "1", "\"\"";
+  }
+  return;
+
+
+
+/**
+ * iniファイルパスを返す
+ * @return なし
+ * @param なし
+ */
+GetIniPath:
+  return macrodir + "\\" + $INI_FILE_NAME;
