@@ -1,4 +1,5 @@
 [TagJumpModule.mac]
+
 // 推奨ショートカット: Ctrl+Alt+G
 
 // 重複に備えて、追試も可能
@@ -14,11 +15,11 @@ loaddll "HmJre.dll";
 
 $INI_FILE_NAME = "TagJumpSettings.ini";
 $SECTION_NAME  = "TAG_JUMP";
-$BASE_KEY_NAME_SEARCH           = "SEARCH"; // 必須
-$BASE_KEY_NAME_TARGET           = "TARGET"; // 必須
-$BASE_KEY_NAME_FILE_EXTENSION   = "FL-EXT"; // 任意
-$BASE_KEY_NAME_FILE_NAME_REGEXP = "NAMERE"; // 任意
-$BASE_KEY_NAME_MODE             = "EXMODE"; // 任意
+$BASE_KEY_NAME_SEARCH           = "SEARCH";           // 必須
+$BASE_KEY_NAME_TARGET           = "TARGET";           // 必須
+$BASE_KEY_NAME_FILE_EXTENSION   = "FILE_EXTENSION";   // 任意
+$BASE_KEY_NAME_FILE_NAME_REGEXP = "FILE_NAME_REGEXP"; // 任意
+$BASE_KEY_NAME_MODE             = "MODE";             // 任意
 
 
 
@@ -265,38 +266,36 @@ endmacro;
 [TagJumpSettings.ini]
 [TAG_JUMP]
 
+        SEARCH1-1 = "(?<=^.{6} .+ PERFORM +)(?!(VARYING|UNTIL))[^( |\.)]+"
+        SEARCH1-2 = "(?<=^.{6} .+ GO +TO +)[^( |\.)]+"
+        SEARCH1-3 = "(?<=^.{6} )[^ ]+(?= +SECTION)"
+        SEARCH1-4 = "(?<=^.{6} )[^( |\.)]+"
+        TARGET1-1 = "(?<=^.{6} )[^ ]+(?= +SECTION)"
+        TARGET1-2 = "(?<=^.{6} )[^( |\.)]+"
+FILE_EXTENSION1   = "???"
+          MODE1   = "MAIN"
 
-SEARCH1-1="(?<=^.{6} .+ PERFORM +)(?!(VARYING|UNTIL))[^( |\.)]+"
-SEARCH1-2="(?<=^.{6} .+ GO +TO +)[^( |\.)]+"
-SEARCH1-3="(?<=^.{6} )[^ ]+(?= +SECTION)"
-SEARCH1-4="(?<=^.{6} )[^( |\.)]+"
-TARGET1-1="(?<=^.{6} )[^ ]+(?= +SECTION)"
-TARGET1-2="(?<=^.{6} )[^( |\.)]+"
-FL-EXT1=""
-EXMODE1="MAIN"
+        SEARCH2-1 = "(?<=^.{6} .+ PERFORM +)(?!(VARYING|UNTIL))[^( |\.)]+"
+        SEARCH2-2 = "(?<=^.{6} .+ GO +TO +)[^( |\.)]+"
+        SEARCH2-3 = "(?<=^.{6} )[^ ]+(?= +SECTION)"
+        SEARCH2-4 = "(?<=^.{6} )[^( |\.)]+"
+        TARGET2-1 = "(?<=^.{6} .+ PERFORM +)(?!(VARYING|UNTIL))[^( |\.)]+"
+        TARGET2-2 = "(?<=^.{6} .+ GO +TO +)[^( |\.)]+"
+FILE_EXTENSION2   = "???"
+          MODE2   = "RE"
 
-SEARCH2-1="(?<=^.{6} .+ PERFORM +)(?!(VARYING|UNTIL))[^( |\.)]+"
-SEARCH2-2="(?<=^.{6} .+ GO +TO +)[^( |\.)]+"
-SEARCH2-3="(?<=^.{6} )[^ ]+(?= +SECTION)"
-SEARCH2-4="(?<=^.{6} )[^( |\.)]+"
-TARGET2-1="(?<=^.{6} .+ PERFORM +)(?!(VARYING|UNTIL))[^( |\.)]+"
-TARGET2-2="(?<=^.{6} .+ GO +TO +)[^( |\.)]+"
-FL-EXT2=""
-EXMODE2="RE"
+        SEARCH3-1 = "(?<=^[^']*GOSUB +)[^( |\t|')]+"
+        SEARCH3-2 = "(?<=^[^']*GOTO +)(?!0)[^( |\t|')]+"
+        SEARCH3-3 = "^[^( |\t|:|')]+"
+        TARGET3-1 = "^[^( |\t|:|')]+"
+FILE_EXTENSION3   = "???"
+          MODE3   = "MAIN"
 
+        SEARCH4-1 = "(?<=^[^']*GOSUB +)[^( |\t|')]+"
+        SEARCH4-2 = "(?<=^[^']*GOTO +)(?!0)[^( |\t|')]+"
+        SEARCH4-3 = "^[^( |\t|:|')]+"
+        TARGET4-1 = "(?<=^[^']*GOSUB +)[^( |\t|')]+"
+        TARGET4-2 = "(?<=^[^']*GOTO +)(?!0)[^( |\t|')]+"
+FILE_EXTENSION4   = "???"
+          MODE4   = "RE"
 
-
-SEARCH3-1="(?<=^[^']*GOSUB +)[^( |\t|')]+"
-SEARCH3-2="(?<=^[^']*GOTO +)(?!0)[^( |\t|')]+"
-SEARCH3-3="^[^( |\t|:|')]+"
-TARGET3-1="^[^( |\t|:|')]+"
-FL-EXT3=""
-EXMODE3="MAIN"
-
-SEARCH4-1="(?<=^[^']*GOSUB +)[^( |\t|')]+"
-SEARCH4-2="(?<=^[^']*GOTO +)(?!0)[^( |\t|')]+"
-SEARCH4-3="^[^( |\t|:|')]+"
-TARGET4-1="(?<=^[^']*GOSUB +)[^( |\t|')]+"
-TARGET4-2="(?<=^[^']*GOTO +)(?!0)[^( |\t|')]+"
-FL-EXT4=""
-EXMODE4="RE"
